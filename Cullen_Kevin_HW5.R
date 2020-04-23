@@ -44,13 +44,6 @@ dolphin_network <- graph_from_data_frame(dolphins.df, directed = FALSE
 everglades.net <- graph_from_data_frame(everglades.df
                                         , vertices = union(everglades.df$start, everglades.df$end))
 
-dolphins.df %>% group_by(i, j) %>% tally()
-  # Find totals by CMTE_ID
-  # san_check.df <- donate.df %>%
-  #   group_by(CMTE_ID, CAND_ID, CAND_NAME) %>%
-  #   summarise(CASH_FOR_VOTES = sum(TRANSACTION_AMT))
-  # san_check.df$CASH_FOR_VOTES = scales::dollar(san_check.df$CASH_FOR_VOTES)
-
 # visualize graph
 set.seed(2020)
 ggraph(dolphin_network, layout = "fr") +
@@ -63,7 +56,7 @@ ggraph(dolphin_network, layout = "fr") +
   theme(legend.position="none")
 
 
-ggraph(everglades.net, layout = "fr") +
+ggraph(subset(everglades.df, value >= 0.05), layout = "fr") +
   geom_edge_link(alpha = 0.2, aes(width = value)) +
   # geom_edge_link(alpha = 0.2) +
   # geom_node_point(aes(color = as.factor(group), size = 10 * nodesize)) +
