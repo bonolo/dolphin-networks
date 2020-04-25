@@ -6,10 +6,11 @@ setwd("~/Projects/cis576/HW5")
 
 # library()  # all statements needed to load libs
 # library(tidyverse)
-# library(RColorBrewer)
 # library(reshape)
-# library(Matrix)
+library(Matrix)
 library(igraph)
+library(scales)
+library(RColorBrewer)
 # library(ggraph)
 
 # --------- Theme, scales, etc ---------------
@@ -32,26 +33,27 @@ options(scipen = 999)
 # --------- Load Text file, clean up, set options. ----------
 
 # http://networkrepository.com/soc-dolphins.php
-# dolphins.m <- readMM("data/soc-dolphins.mtx")
-# dolphins.df <- summary(dolphins.m)
+dolphins.m <- readMM("data/soc-dolphins.mtx")
+dolphins.df <- summary(dolphins.m)
+colnames(dolphins.df) <- c("from", "to")
 
 # http://networkrepository.com/eco-everglades.php
 # everglades.df <- read.csv("data/eco-everglades.edges", header = FALSE, sep = " ")
-# colnames(everglades.df) <- c("start", "end", "value")
+# colnames(everglades.df) <- c("from", "to", "weight")
 
 # http://networkrepository.com/aves-thornbill-farine.php
-thornbill.df <- read.csv("data/aves-thornbill-farine.edges", header = FALSE, sep = " ")
-colnames(thornbill.df) <- c("from", "to", "weight")
+# thornbill.df <- read.csv("data/aves-thornbill-farine.edges", header = FALSE, sep = " ")
+# colnames(thornbill.df) <- c("from", "to", "weight")
 
 # build igraph object from CSV files
-# dolphin_network <- graph_from_data_frame(dolphins.df, directed = FALSE
-#                                          , vertices = union(dolphins.df$i, dolphins.df$j))
+igraph.net <- graph_from_data_frame(dolphins.df, directed = FALSE
+                                         , vertices = union(dolphins.df$from, dolphins.df$to))
 
-# everglades.net <- graph_from_data_frame(everglades.df, directed = FALSE
-#                                         , vertices = union(everglades.df$start, everglades.df$end))
+# igraph.net <- graph_from_data_frame(everglades.df, directed = FALSE
+#                                     , vertices = union(everglades.df$from, everglades.df$to))
 
-igraph.net <- graph_from_data_frame(thornbill.df, directed = FALSE
-                                       , vertices = union(thornbill.df$start, thornbill.df$end))
+# igraph.net <- graph_from_data_frame(thornbill.df, directed = FALSE
+#                                     , vertices = union(thornbill.df$start, thornbill.df$end))
 class(igraph.net)
 # E(igraph.net)         # The edges of the "net" object
 # V(igraph.net)         # The vertices of the "net" object
@@ -87,7 +89,8 @@ plot(
 
 # Set edge width based on weight
 # E(igraph.net)$width <- E(igraph.net)$weight/10
-E(igraph.net)$width <- E(igraph.net)$weight
+# E(igraph.net)$width <- E(igraph.net)$weight
+E(igraph.net)$width <- rescale(E(igraph.net)$weight)
 
 # change edge color
 E(igraph.net)$edge.color <- "gray80"
@@ -128,11 +131,21 @@ plot(igraph.net, layout = lw, vertex.size = 5, vertex.label = NA)
 
 # Kamada Kawai
 l <- layout_with_kk(igraph.net)
-plot(igraph.net, layout=l, vertex.size = 5, vertex.label = NA)
+plot(
+  igraph.net,
+  layout = l,
+  vertex.size = 5,
+  vertex.label = NA
+)
 
 # Graphopt
 l <- layout_with_graphopt(igraph.net)
-plot(igraph.net, layout=l, vertex.size = 5, vertex.label = NA)
+plot(
+  igraph.net,
+  layout = l,
+  vertex.size = 5,
+  vertex.label = NA
+)
 
 # The charge parameter below changes node repulsion:
 l1 <- layout_with_graphopt(igraph.net, charge = 0.02)
@@ -171,7 +184,8 @@ for (layout in layouts) {
 }
 
 
-hist(E(igraph.net)$weight, breaks = 25)
+# hist(E(igraph.net)$weight, breaks = 25)
+hist(E(igraph.net)$weight)
 mean(E(igraph.net)$weight)
 sd(E(igraph.net)$weight)
 
@@ -197,51 +211,66 @@ class(clp)
 # which igraph knows how to plot:
 plot(clp,
      igraph.net,
+     layout = layout_with_fr,
      vertex.size = 5,
      vertex.label = NA)
 
 # We can also plot the communities without relying on their built-in plot:
 V(igraph.net)$community <- clp$membership
-colrs <-
-  adjustcolor(c("gray50", "tomato", "gold", "yellowgreen"), alpha = .6)
+# colrs <- adjustcolor(c("gray50", "tomato", "gold", "yellowgreen"), alpha = .6)
+colrs <- brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2")
 plot(
   igraph.net,
+  # layout = layout_with_fr,
+  layout = layout_with_graphopt,
   vertex.color = colrs[V(igraph.net)$community],
-  vertex.size = 5,
+  # vertex.size = 5,
   vertex.label = NA
 )
+
+
 
 # -- 4.4 Highlighting specific nodes or links ----------
 # The distances function returns a matrix of shortest paths from nodes listed
 # in the v parameter to ones included in the to parameter.
-# Node 6 has the highest degree (links), so let's focus on that
-dist.from.six <-
+# Thornbill: Node 6 has the highest degree (links), so let's focus on that
+# Eco: Node 66 has the highest degree
+# Dolphins: Node 15 has the highest degree
+dist.from.node <-
   distances(
     igraph.net,
-    v = V(igraph.net)[name == "6"],
+    # v = V(igraph.net)[name == "6"],
+    # v = V(igraph.net)[name == "66"],
+    v = V(igraph.net)[name == "15"],
     to = V(igraph.net),
     weights = NA
   )
 
 # Set colors to plot the distances:
 oranges <- colorRampPalette(c("dark red", "gold"))
-col <- oranges(max(dist.from.six) + 1)
-col <- col[dist.from.six + 1]
+col <- oranges(max(dist.from.node) + 1)
+col <- col[dist.from.node + 1]
 
 plot(
   igraph.net,
   vertex.color = col,
-  vertex.label = dist.from.six,
+  vertex.label = dist.from.node,
   vertex.label.color = "white",
   vertex.size = 10
 )
 
 
 # -- Highlight a path in the network ----------
-# Nodes 11 & 56 are tied for 2nd-highest degree
+# Thornbill: Nodes 11 & 56 are tied for 2nd-highest degree
+# Eco: Node 64 has 2nd-highest degree
+# Dolphins: Nodes 38 & 46 are tied for 2nd-highest degree
 igraph.path <- shortest_paths(igraph.net
-                                 , from = V(igraph.net)[name == '56']
-                                 , to = V(igraph.net)[name == '6']
+                                 # , from = V(igraph.net)[name == '56']
+                                 # , from = V(igraph.net)[name == '64']
+                                 , from = V(igraph.net)[name == '38']
+                                 # , to = V(igraph.net)[name == '6']
+                                 # , to = V(igraph.net)[name == '66']
+                                 , to = V(igraph.net)[name == '15']
                                  , output = "both") # both path nodes and edges
 
 # Generate edge color variable to plot the path:
@@ -265,7 +294,9 @@ plot(
 
 # We can highlight the edges going into or out of a vertex.
 # For a single node, use incident(), for multiple nodes use incident_edges()
-vertices.v = c(6, 11, 56)
+# vertices.v = c(6, 11, 56) # Thornbill
+# vertices.v = c(66) # Eco
+vertices.v = c(15, 38, 46) # Dolphins
 inc.edges <-
   # incident(igraph.net, V(igraph.net)[name == "6"], mode = "all")
   incident_edges(igraph.net, V(igraph.net)[name %in% vertices.v], mode = "all")
@@ -289,12 +320,15 @@ plot(
 # neighbors function finds all nodes one step out from focal actor.
 # To find the neighbors for multiple nodes, use adjacent_vertices().
 neigh.nodes <-
-  neighbors(igraph.net, V(igraph.net)[name == "6"], mode = "out")
+  # neighbors(igraph.net, V(igraph.net)[name == "6"], mode = "out") # Thornbill
+  # neighbors(igraph.net, V(igraph.net)[name == "66"], mode = "out") # Eco
+  neighbors(igraph.net, V(igraph.net)[name == "15"], mode = "out") # Dolphins
 
 # Set colors to plot the neighbors:
 vcol[neigh.nodes] <- "#ff9d00"
 plot(
   igraph.net,
+  # layout = layout_in_circle,
   vertex.color = vcol,
   vertex.size = 5,
   vertex.label = NA
