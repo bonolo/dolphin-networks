@@ -218,16 +218,20 @@ plot(clp,
 # We can also plot the communities without relying on their built-in plot:
 V(igraph.net)$community <- clp$membership
 # colrs <- adjustcolor(c("gray50", "tomato", "gold", "yellowgreen"), alpha = .6)
-colrs <- brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2")
+colrs <- adjustcolor(brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2"), alpha = .6)
+# colrs <- brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2")
 plot(
   igraph.net,
-  # layout = layout_with_fr,
-  layout = layout_with_graphopt,
+  layout = layout_with_fr,
+  # layout = layout_with_graphopt,
   vertex.color = colrs[V(igraph.net)$community],
+  vertex.frame.color = colrs[V(igraph.net)$community],
+  edge.curved = 0.2,
   # vertex.size = 5,
-  vertex.label = NA
+  vertex.label = NA,
+  main = "Network plot. Vertices colored by community",
+  sub = "Communities calculated with cluster_optimal()"
 )
-
 
 
 # -- 4.4 Highlighting specific nodes or links ----------
