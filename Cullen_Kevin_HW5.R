@@ -278,4 +278,51 @@ plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "si
 
 
 
+
+# ----~~ node/edge customization ----
+
+# First do nodes
+nodes <- hive4$nodes
+
+# Change the node color and size based on node degree and betweenness values
+for (i in 1:nrow(nodes))
+{
+  nodes$color[i] <- nodes_col[which(nodes$lab[i] == V(igraph.net)$name)]
+  nodes$size[i] <- nodes_size[which(nodes$lab[i] == V(igraph.net)$name)]
+}
+
+# Reassign these nodes to the hive(4) object
+hive4$nodes <- nodes
+
+# And plot it (Figure 2)
+plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "sink"), 
+         axLab.gpar = gpar(col = c("red", "blue", "green")), axLab.pos = 10)
+
+# Now do the edges
+edges <- hive4$edges
+
+# Change the edge color based on Dice similarity
+for (i in 1:nrow(edges))
+{
+  index1 <- which(nodes$id == edges$id1[i])
+  index2 <- which(nodes$id == edges$id2[i])
+  
+  edges$color[i] <- edges_col[which(E(igraph.net)[as.character(nodes$lab[index1]) %--% as.character(nodes$lab[index2])] == E(igraph.net))]
+}
+
+# Reassign these edges to the hive(4) object
+hive4$edges <- edges
+
+# And plot it (Figure 3)
+plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "sink"), 
+         axLab.gpar = gpar(col = brewer.pal(6, "Dark2")), axLab.pos = 10)
+
+# Some edges are too thick, so we will reduce the edge weight (thickness) by 25%
+hive4$edges$weight <- hive4$edges$weight/4
+
+# And plot it (Figure 5)
+plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "sink"), 
+         axLab.gpar = gpar(col = c("red", "blue", "green")), axLab.pos = 10)
+
+
 ##########
