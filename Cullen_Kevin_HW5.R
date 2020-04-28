@@ -2,6 +2,7 @@
 # CIS576 HW5
 # Kevin Cullen
 # Network Visualization
+
 setwd("~/Projects/cis576/HW5")
 
 # library()  # all statements needed to load libs
@@ -13,20 +14,16 @@ library(scales)
 library(RColorBrewer)
 # library(ggraph)
 
-# --------- Theme, scales, etc ---------------
+# -- Sources --- 
+# Tutorial...
+# Static and dynamic network visualization with R, Katherine Ognyanova
+# https://kateto.net/network-visualization
+# 
+# Data...
+# http://networkrepository.com/soc-dolphins.php
+# 
 
-# theme_set(theme_light())
-# light.grey <- "#dddddd"
-# light.grey.line <- element_line(size = 0.3, color = light.grey)
-# theme.base <- theme(panel.border = element_blank()
-#                     , panel.grid.major = element_blank()
-#                     , panel.grid.minor = element_blank()
-#                     , axis.ticks.x = element_blank()
-#                     , axis.ticks.y = element_blank()
-# )
-# palette25 <- colorRampPalette(brewer.pal(8, "Dark2"))(25)
-# palette2 <- c("#66C2A5", "#FC8D62")
-# palette2rev <- c("#FC8D62", "#66C2A5")
+# --------- Theme, scales, etc ---------------
 
 options(scipen = 999)
 
@@ -54,12 +51,12 @@ igraph.net <- graph_from_data_frame(dolphins.df, directed = FALSE
 
 # igraph.net <- graph_from_data_frame(thornbill.df, directed = FALSE
 #                                     , vertices = union(thornbill.df$start, thornbill.df$end))
-class(igraph.net)
+# class(igraph.net)
 # E(igraph.net)         # The edges of the "net" object
 # V(igraph.net)         # The vertices of the "net" object
 # E(igraph.net)$weight  # Edge attribute "weight"
 
-plot(igraph.net)
+# plot(igraph.net)
 # Remove loops in the graph
 igraph.net <- simplify(igraph.net, remove.multiple = F, remove.loops = T)
 plot(igraph.net)
@@ -185,9 +182,9 @@ for (layout in layouts) {
 
 
 # hist(E(igraph.net)$weight, breaks = 25)
-hist(E(igraph.net)$weight)
-mean(E(igraph.net)$weight)
-sd(E(igraph.net)$weight)
+# hist(E(igraph.net)$weight)
+# mean(E(igraph.net)$weight)
+# sd(E(igraph.net)$weight)
 
 # Keep edges with weight > mean
 igraph.net.sp <-
@@ -215,24 +212,50 @@ plot(clp,
      vertex.size = 5,
      vertex.label = NA)
 
+
 # We can also plot the communities without relying on their built-in plot:
 V(igraph.net)$community <- clp$membership
+# Make a list to hold vectors for each detected community
+groups.l <- list()
+for(i in unique(V(igraph.net)$community)){
+  groups.l[[i]] <- as.vector(V(igraph.net)[community == i])
+}
 # colrs <- adjustcolor(c("gray50", "tomato", "gold", "yellowgreen"), alpha = .6)
-colrs <- adjustcolor(brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2"), alpha = .6)
+colrs <- adjustcolor(brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2"), alpha = .7)
+group.colrs <- adjustcolor(brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2"), alpha = .2)
 # colrs <- brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2")
 plot(
   igraph.net,
-  layout = layout_with_fr,
-  # layout = layout_with_graphopt,
+  # layout = layout_with_fr,
+  layout = layout_with_graphopt, # Examine settings at: https://igraph.org/r/doc/layout_with_graphopt.html
+  charge = 0.0001,
+  max.sa.movement = 20,
+  spring.length = 50,
   vertex.color = colrs[V(igraph.net)$community],
   vertex.frame.color = colrs[V(igraph.net)$community],
-  edge.curved = 0.2,
-  # vertex.size = 5,
+  # edge.curved = 0.2,
+  vertex.size = 5,
   vertex.label = NA,
-  main = "Network plot. Vertices colored by community",
+  mark.groups = groups.l,
+  mark.col = group.colrs,
+  mark.border = NA,
+  main = "Network plot - Vertices colored by community",
   sub = "Communities calculated with cluster_optimal()"
 )
 
+
+# as.vector(V(igraph.net)[community == 1])
+# unique(V(igraph.net)$community)
+
+
+plot(
+  igraph.net,
+  mark.groups = groups.l,
+  mark.col = colrs,
+  mark.border = NA,
+  vertex.size = 5,
+  vertex.label = NA
+)
 
 # -- 4.4 Highlighting specific nodes or links ----------
 # The distances function returns a matrix of shortest paths from nodes listed
