@@ -5,29 +5,42 @@
 
 setwd("~/Projects/cis576/HW5")
 
+# ---- Libraries ----
 # library()  # all statements needed to load libs
 # library(tidyverse)
 # library(reshape)
 library(Matrix)
 library(igraph)
 library(RColorBrewer)
+library(plyr)
 # library(scales)
 # library(ggraph)
 
-# -- Sources --- 
+
+
+# ---- Sources ---- 
 # Tutorial...
 # Static and dynamic network visualization with R, Katherine Ognyanova
 # https://kateto.net/network-visualization
+# 
+# Sample file provided to class: plotNetworkUsingHiveR_Good.R
 # 
 # Data...
 # http://networkrepository.com/soc-dolphins.php
 # 
 
+# ----~~ and source()s ----
+
+source("mod.adj2HPD.R")
+source("mod.mineHPD.R")
+source("mod.edge2HPD.R")
+
+
 # --------- Theme, scales, etc ---------------
 
 options(scipen = 999)
 
-# --------- Load Text file, clean up, set options. ----------
+# ---- Load Text file, clean up, set options. ----
 
 # http://networkrepository.com/soc-dolphins.php
 # Dolphin social network. Unweighted. Undirected.
@@ -59,14 +72,49 @@ igraph.net <- graph_from_data_frame(dolphins.df, directed = FALSE
 
 # Remove loops in the graph
 igraph.net <- simplify(igraph.net, remove.multiple = F, remove.loops = T)
-plot(igraph.net)
-
+# plot(igraph.net)
 # Plot with curved edges (edge.curved=.1)
-plot(igraph.net, edge.curved = .1)
+# plot(igraph.net, edge.curved = .1)
 
-# Compute node degrees (#links) and use that to set node size:
-# deg <- degree(igraph.net, mode = "all")
-# V(igraph.net)$size <- deg / 3
+# Calculate degree for all nodes (#links)
+degAll <- igraph::degree(igraph.net, v = V(igraph.net), mode = "all")
+# Use degree to set node size:
+# V(igraph.net)$size <- degAll / 3
+
+# Calculate betweenness for all nodes
+betAll <- igraph::betweenness(igraph.net, v = V(igraph.net), directed = FALSE) / (((vcount(igraph.net) - 1) * (vcount(igraph.net)-2)) / 2)
+betAll.norm <- (betAll - min(betAll))/(max(betAll) - min(betAll))
+
+igraph.net <- igraph::set.vertex.attribute(igraph.net, "degree", index = V(igraph.net), value = degAll)
+igraph.net <- igraph::set.vertex.attribute(igraph.net, "betweenness", index = V(igraph.net), value = betAll.norm)
+
+
+igraph.net <- igraph::set.edge.attribute(igraph.net, "weight", index = E(igraph.net), value = 0)
+igraph.net <- igraph::set.edge.attribute(igraph.net, "similarity", index = E(igraph.net), value = 0)
+
+# Calculate Dice similarities between all pairs of nodes
+dsAll <- igraph::similarity.dice(igraph.net, vids = V(igraph.net), mode = "all")
+
+
+# Calculate edge weight based on the node similarity
+F1 <- function(x) {data.frame(V4 = dsAll[which(V(igraph.net)$name == as.character(x$from)), which(V(igraph.net)$name == as.character(x$to))])}
+dolphins.ext <- ddply(dolphins.df, .variables=c("from", "to"), function(x) data.frame(F1(x)))
+
+for (i in 1:nrow(dolphins.ext))
+{
+  # dolphin dataset has not weight
+  # E(igraph.net)[as.character(dolphins.ext$from) %--% as.character(dolphins.ext$to)]$weight <- as.numeric(dolphins.ext$V3)
+  E(igraph.net)[as.character(dolphins.ext$from) %--% as.character(dolphins.ext$to)]$similarity <- as.numeric(dolphins.ext$V4)
+}
+
+rm(degAll, betAll, betAll.norm, F1, dsAll, i)
+
+write.table(dolphins.ext, "dolphin_similarity.csv", row.names = FALSE, 
+            col.names = c("from", "to", "similarity"), sep=",")
+
+
+
+
 
 # Set edge width based on weight
 # E(igraph.net)$width <- E(igraph.net)$weight/10
