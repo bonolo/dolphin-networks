@@ -1,48 +1,51 @@
-# ---- CIS576 HW5 ----
+# -- CIS576 HW5 ----
 #
 # Kevin Cullen
 # Network Visualization
 
 setwd("~/Projects/cis576/HW5")
 
-# ---- Libraries ----
-# library()  # all statements needed to load libs
-# library(tidyverse)
-# library(reshape)
+
+# -- References / Credits---- 
+# Tutorial...
+# Static and dynamic network visualization with R, Katherine Ognyanova
+# https://kateto.net/network-visualization
+# 
+# Sample file provided to class... plotNetworkUsingHiveR_Good.R
+# 
+# Data...
+# http://networkrepository.com/soc-dolphins.php
+# 
+# External / replacement functions
+# https://www.vesnam.com/Rblog/viznets3/
+# mod.mineHPD, mod.edge2HPD
+# https://gist.github.com/Vessy/6054742
+# mod.adj2HPD.R
+ 
+
+# -- Libraries ----
 library(Matrix)
 library(igraph)
 library(RColorBrewer)
 library(plyr)
 library(HiveR)
 library(grid)
-# library(scales)
-# library(ggraph)
+library(dplyr)
 
 
-
-# ---- References ---- 
-# Tutorial...
-# Static and dynamic network visualization with R, Katherine Ognyanova
-# https://kateto.net/network-visualization
-# 
-# Sample file provided to class: plotNetworkUsingHiveR_Good.R
-# 
-# Data...
-# http://networkrepository.com/soc-dolphins.php
-# 
-
-# ----~~ and source()s ----
+# -- source()s ----
 
 source("mod.adj2HPD.R")
 source("mod.mineHPD.R")
 source("mod.edge2HPD.R")
 
 
-# --------- Theme, scales, etc ---------------
+# -- settings, etc ----
 
 options(scipen = 999)
 
-# ---- Load Text file, clean up, set options. ----
+
+# -- Load Text file, clean up, set options. ----
 
 # http://networkrepository.com/soc-dolphins.php
 # Dolphin social network. Unweighted. Undirected.
@@ -50,89 +53,55 @@ dolphins.m <- readMM("data/soc-dolphins.mtx")
 dolphins.df <- summary(dolphins.m)
 colnames(dolphins.df) <- c("from", "to")
 
-# http://networkrepository.com/eco-everglades.php
-# everglades.df <- read.csv("data/eco-everglades.edges", header = FALSE, sep = " ")
-# colnames(everglades.df) <- c("from", "to", "weight")
-
-# http://networkrepository.com/aves-thornbill-farine.php
-# thornbill.df <- read.csv("data/aves-thornbill-farine.edges", header = FALSE, sep = " ")
-# colnames(thornbill.df) <- c("from", "to", "weight")
-
-# build igraph object from CSV files
+# --~~ Build igraph object from CSV files ----
 igraph.net <- graph_from_data_frame(dolphins.df, directed = FALSE
                                          , vertices = union(dolphins.df$from, dolphins.df$to))
 
-# igraph.net <- graph_from_data_frame(everglades.df, directed = FALSE
-#                                     , vertices = union(everglades.df$from, everglades.df$to))
-
-# igraph.net <- graph_from_data_frame(thornbill.df, directed = FALSE
-#                                     , vertices = union(thornbill.df$start, thornbill.df$end))
-#                                     
 # class(igraph.net)
 # E(igraph.net)         # The edges of the "net" object
 # V(igraph.net)         # The vertices of the "net" object
-# E(igraph.net)$weight  # Edge attribute "weight"
-# 
-# --~~ Examine weight -----
-# Dolphin data set has no weight
-# hist(E(igraph.net)$weight, breaks = 25)
-# hist(E(igraph.net)$weight)
-# mean(E(igraph.net)$weight)
-# sd(E(igraph.net)$weight)
-
-# Keep edges with weight > mean
-# igraph.net.sp <- delete_edges(igraph.net, E(igraph.net)[weight < mean(E(igraph.net)$weight)])
-
-# Set edge width based on weight
-# E(igraph.net)$width <- E(igraph.net)$weight/10
-# E(igraph.net)$width <- E(igraph.net)$weight
-# E(igraph.net)$width <- rescale(E(igraph.net)$weight)
-
-
+# E(igraph.net)$weight  # Edge attribute "weight" -- Dolphin data set has no weight
 
 # Remove loops in the graph
 igraph.net <- simplify(igraph.net, remove.multiple = F, remove.loops = T)
-# plot(igraph.net)
-# Plot with curved edges (edge.curved=.1)
-# plot(igraph.net, edge.curved = .1)
 
 
-# ---- Network plots... loop layouts ----
+# -- Network plots... loop layouts ----
 
-
-# Set the network layout:
+# Set a network layout and plot:
 graph_attr(igraph.net, "layout") <- layout_with_graphopt
 plot(igraph.net, vertex.label = NA)
+# With curved edges...
+# plot(igraph.net, edge.curved = .1)
 
 # Let’s take a look at all available layouts in igraph:
 layouts <- grep("^layout_", ls("package:igraph"), value = TRUE)[-1]
 
 # Remove layouts that do not apply to our graph.
-layouts <-
-  layouts[!grepl("bipartite|merge|norm|sugiyama|tree", layouts)]
+layouts <- layouts[!grepl("bipartite|merge|norm|sugiyama|tree", layouts)]
 
 # par(mfrow = c(3, 3), mar = c(1, 1, 1, 1))
-for (layout in layouts) {
-  print(layout)
-  l <- do.call(layout, list(igraph.net))
-  plot(
-    igraph.net,
-    edge.arrow.mode = 0,
-    vertex.label = NA,
-    layout = l,
-    main = layout
-  )
-}
+# for (layout in layouts) {
+#   print(layout)
+#   l <- do.call(layout, list(igraph.net))
+#   plot(
+#     igraph.net,
+#     edge.arrow.mode = 0,
+#     vertex.label = NA,
+#     layout = l,
+#     main = layout
+#   )
+# }
 
 
-# -- Community Detection -------
+# -- Community Detection ----
 
 # Community detection (by optimizing modularity over partitions):
 clp <- cluster_optimal(igraph.net)
 class(clp)
 
 
-# ------~~ Plot w/ communities class built-in ------
+# --~~ Plot w/ communities class built-in ----
 # Community detection returns an object of class "communities"
 # which igraph knows how to plot:
 plot(clp,
@@ -151,8 +120,8 @@ for(i in unique(V(igraph.net)$community)){
 }
 
 # colrs <- brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2")
-colrs <- adjustcolor(brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2"), alpha = .7)
-group.colrs <- adjustcolor(brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set2"), alpha = .2)
+colrs <- adjustcolor(brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set1"), alpha = .7)
+group.colrs <- adjustcolor(brewer.pal(n = length(unique(V(igraph.net)$community)), name = "Set1"), alpha = .2)
 
 # plot(
 #   igraph.net,
@@ -165,7 +134,7 @@ group.colrs <- adjustcolor(brewer.pal(n = length(unique(V(igraph.net)$community)
 
 plot(
   igraph.net,
-  layout = layout_with_fr,
+  layout = layout_with_fr, # layout_with_mds
   # layout = layout_with_graphopt, # Examine settings at: https://igraph.org/r/doc/layout_with_graphopt.html
   charge = 0.0001,
   max.sa.movement = 20,
@@ -178,8 +147,8 @@ plot(
   mark.groups = groups.l,
   mark.col = group.colrs,
   mark.border = NA,
-  main = "Network plot - Vertices colored by community",
-  sub = "Communities calculated with cluster_optimal()"
+  main = "Dolphin Social Network Colored by Community",
+  sub = "Nodes = Dolphins. Communities detected with cluster_optimal()"
 )
 
 
@@ -187,9 +156,47 @@ plot(
 # unique(V(igraph.net)$community)
 
 
-# ---- Hive Pre-work ----
+# -- Circle Plot (circlize) ----
 
-# ----~~ Set network attributes ----
+# https://www.r-graph-gallery.com/123-circular-plot-circlize-package-2.html
+
+# Load library
+library(circlize)
+
+# create dataframe of edges w/ communities & colors
+circle.e.df <- data.frame(as_edgelist(igraph.net))
+colnames(circle.e.df) <- c("from", "to")
+
+# create data frame of vertices w/ communities & colors
+circle.v.df <- data.frame(node.id = as.factor(V(igraph.net))
+                       , community = as.factor(V(igraph.net)$community)
+                       , community.color = as.character(colrs[V(igraph.net)$community])
+                       )
+circle.v.df$community.color <- as.character(circle.v.df$community.color) # Twice? Really?
+circle.v.df <- circle.v.df[order(circle.v.df$community),]
+
+# join community & color on to the edge list, using from node.id
+circle.e.df <- left_join(circle.e.df, circle.v.df, by = c("from" = "node.id"))
+gridcolor <- circle.v.df$community.color
+
+
+# Create circular plot from edge list
+chordDiagram(circle.e.df[,1:2]
+             , transparency = 0.5
+             , order = circle.v.df$node.id # set colors set before sorting data!!!
+             , grid.col = gridcolor
+             )
+title("Circle Plot - Dolphin social networks colored by community")
+# union(circle.e.df[[1]], circle.e.df[[2]])
+
+circos.clear()
+
+
+
+
+# -- Hive Pre-work ----
+
+# --~~ Set network attributes ----
 # When I put this code before community detection, the community results were
 # nuts. Coloring didn't make sense, tiny groups, etc.
 
@@ -228,7 +235,7 @@ write.table(dolphins.ext, "dolphin_similarity.csv", row.names = FALSE,
 
 
 
-# ----~~ node/edge color based on the properties ----
+# --~~ node/edge color based on the properties ----
 
 # Calculate node size
 # We'll interpolate node size based on the node betweenness centrality, using the "approx" function
@@ -256,7 +263,7 @@ rm(F2, colCodes)
 
 
 
-# ---- HiveR start ----
+# -- HiveR start ----
 
 # Create a hive plot from the data frame
 hive1 <- mod.edge2HPD(edge_df = dolphins.ext)
@@ -279,7 +286,7 @@ plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "si
 
 
 
-# ----~~ node/edge customization ----
+# --~~ node/edge customization ----
 
 # First do nodes
 nodes <- hive4$nodes
@@ -325,4 +332,7 @@ plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "si
          axLab.gpar = gpar(col = c("red", "blue", "green")), axLab.pos = 10)
 
 
+
+
 ##########
+
