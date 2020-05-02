@@ -11,7 +11,11 @@ setwd("~/Projects/cis576/HW5")
 # Static and dynamic network visualization with R, Katherine Ognyanova
 # https://kateto.net/network-visualization
 # 
-# Sample file provided to class... plotNetworkUsingHiveR_Good.R
+# Cirlize tutorials at R Graph Gallery
+# https://www.r-graph-gallery.com/chord-diagram.html
+# 
+# Hive Network - based loosely upon sample file provided to class...
+# plotNetworkUsingHiveR_Good.R
 # 
 # Data...
 # http://networkrepository.com/soc-dolphins.php
@@ -113,7 +117,7 @@ plot(clp,
 
 # We can also plot the communities without relying on their built-in plot:
 V(igraph.net)$community <- clp$membership
-# Make a list to hold vectors for each detected community
+# Make a list to hold a separate vector for each detected community
 groups.l <- list()
 for(i in unique(V(igraph.net)$community)){
   groups.l[[i]] <- as.vector(V(igraph.net)[community == i])
@@ -210,29 +214,7 @@ betAll.norm <- (betAll - min(betAll))/(max(betAll) - min(betAll))
 igraph.net <- igraph::set.vertex.attribute(igraph.net, "degree", index = V(igraph.net), value = degAll)
 igraph.net <- igraph::set.vertex.attribute(igraph.net, "betweenness", index = V(igraph.net), value = betAll.norm)
 
-# Zero out edge weight and similarity
-igraph.net <- igraph::set.edge.attribute(igraph.net, "weight", index = E(igraph.net), value = 0)
-igraph.net <- igraph::set.edge.attribute(igraph.net, "similarity", index = E(igraph.net), value = 0)
-
-# Calculate Dice similarities between all pairs of nodes
-dsAll <- igraph::similarity.dice(igraph.net, vids = V(igraph.net), mode = "all")
-
-# Calculate edge weight based on the node similarity
-F1 <- function(x) {data.frame(V4 = dsAll[which(V(igraph.net)$name == as.character(x$from)), which(V(igraph.net)$name == as.character(x$to))])}
-dolphins.ext <- ddply(dolphins.df, .variables=c("from", "to"), function(x) data.frame(F1(x)))
-
-for (i in 1:nrow(dolphins.ext))
-{
-  # dolphin dataset has no weight
-  # E(igraph.net)[as.character(dolphins.ext$from) %--% as.character(dolphins.ext$to)]$weight <- as.numeric(dolphins.ext$V3)
-  E(igraph.net)[as.character(dolphins.ext$from) %--% as.character(dolphins.ext$to)]$similarity <- as.numeric(dolphins.ext$V4)
-}
-
-rm(degAll, betAll, betAll.norm, F1, dsAll, i)
-
-write.table(dolphins.ext, "dolphin_similarity.csv", row.names = FALSE, 
-            col.names = c("from", "to", "similarity"), sep=",")
-
+rm(degAll, betAll, betAll.norm)
 
 
 # --~~ node/edge color based on the properties ----
@@ -244,16 +226,19 @@ approxVals <- approx(c(0.5, 1.5), n = length(unique(V(igraph.net)$betweenness)))
 nodes_size <- sapply(V(igraph.net)$betweenness, function(x) approxVals$y[which(sort(unique(V(igraph.net)$betweenness)) == x)])
 rm(approxVals)
 
+
 # Define node color
-# We'll interpolate node colors based on the node degree using the "colorRampPalette" function from the "grDevices" library
-library("grDevices")
-# This function returns a function corresponding to a collor palete of "bias" number of elements
-F2 <- colorRampPalette(c("#F5DEB3", "#FF0000"), bias = length(unique(V(igraph.net)$degree)), space = "rgb", interpolate = "linear")
-# Now we'll create a color for each degree
-colCodes <- F2(length(unique(V(igraph.net)$degree)))
-# And we will assign a color for each node based on its degree
-nodes_col <- sapply(V(igraph.net)$degree, function(x) colCodes[which(sort(unique(V(igraph.net)$degree)) == x)])
-rm(F2, colCodes)
+
+V(igraph.net)$degree
+V(igraph.net)$community
+V(igraph.net)$color
+V(igraph.net)$degree
+
+# And we will assign a color for each node based on its community
+V(igraph.net)$color <- colrs[V(igraph.net)$community]
+
+
+
 
 # Assign visual attributes to edges using the same approach as we did for nodes
 F2 <- colorRampPalette(c("#FFFF00", "#006400"), bias = length(unique(E(igraph.net)$similarity)), space = "rgb", interpolate = "linear")
@@ -266,7 +251,26 @@ rm(F2, colCodes)
 # -- HiveR start ----
 
 # Create a hive plot from the data frame
-hive1 <- mod.edge2HPD(edge_df = dolphins.ext)
+hive1 <- mod.edge2HPD(edge_df = dolphins.df)
+
+hive1 <- mod.edge2HPD(edge_df = circle.e.df[,1:2]
+                      , edge.color = circle.e.df$community.color
+                      , node.color = circle.v.df[,c(1,3)]
+                      )
+
+# mod.edge2HPD <- function(edge_df = NULL, unique.rows = TRUE, axis.cols = NULL, type = "2D", 
+#                         desc = NULL, 
+#                         edge.weight = NULL, edge.color = NULL, 
+#                         node.color = NULL, node.size = NULL, node.radius = NULL, node.axis = NULL) 
+  #edge.weight - a list corresponding to edge weights (same order as in edge_df)
+  #edge.color - a lis corresponding to edge colors (same order as in edge_df)
+  #node.color - a data frame consisting of two columns: column 1 - node labels, column 2 - node color
+  #node.size - a data frame consisting of two columns: column 1 - node labels, column 2 - node size
+  #node.radius - a data frame consisting of two columns: column 1 - node labels, column 2 - node radius
+  #node.axis - a data frame consisting of two columns: column 1 - node labels, column 2 - node axis
+
+
+
 #sumHPD(hive1)
 
 # Assign nodes to a radius based on their degree (number of edges they are touching)
@@ -287,19 +291,6 @@ plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "si
 
 
 # --~~ node/edge customization ----
-
-# First do nodes
-nodes <- hive4$nodes
-
-# Change the node color and size based on node degree and betweenness values
-for (i in 1:nrow(nodes))
-{
-  nodes$color[i] <- nodes_col[which(nodes$lab[i] == V(igraph.net)$name)]
-  nodes$size[i] <- nodes_size[which(nodes$lab[i] == V(igraph.net)$name)]
-}
-
-# Reassign these nodes to the hive(4) object
-hive4$nodes <- nodes
 
 # And plot it (Figure 2)
 plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "sink"), 
@@ -323,14 +314,6 @@ hive4$edges <- edges
 # And plot it (Figure 3)
 plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "sink"), 
          axLab.gpar = gpar(col = brewer.pal(6, "Dark2")), axLab.pos = 10)
-
-# Some edges are too thick, so we will reduce the edge weight (thickness) by 25%
-hive4$edges$weight <- hive4$edges$weight/4
-
-# And plot it (Figure 5)
-plotHive(hive4, method = "abs", bkgnd = "white", axLabs = c("source", "hub", "sink"), 
-         axLab.gpar = gpar(col = c("red", "blue", "green")), axLab.pos = 10)
-
 
 
 
