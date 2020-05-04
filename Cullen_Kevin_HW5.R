@@ -16,7 +16,7 @@ setwd("~/Projects/cis576/HW5")
 # And the Circlize Vignette
 # https://jokergoo.github.io/circlize_book/book/
 # 
-# # Hive Network - based loosely upon sample file provided to class...
+# Hive Network - based loosely upon sample file provided to class...
 # plotNetworkUsingHiveR_Good.R
 # 
 # Data...
@@ -121,7 +121,6 @@ V(igraph.net)$community <- clp$membership
 # Make a list & fill with a separate vector for each detected community
 communities.l <- list()
 for(i in unique(V(igraph.net)$community)){
-  # communities.l[[i]] <- as.vector(V(igraph.net)[community == i])
   communities.l[[i]] <- as.vector(V(igraph.net)[community == i]$name)
 }
 
@@ -141,11 +140,9 @@ plot(
   charge = 0.0001,
   max.sa.movement = 20,
   spring.length = 50,
-  # vertex.color = colrs[V(igraph.net)$community],
   vertex.color = V(igraph.net)$vertex.color,
-  # vertex.frame.color = colrs[V(igraph.net)$community],
   vertex.frame.color = V(igraph.net)$vertex.color,
-  # edge.curved = 0.2,
+  edge.curved = 0.3,
   vertex.size = 5,
   vertex.label = NA,
   # vertex.label = V(igraph.net)$name, # Show names... useful for debugging
@@ -198,39 +195,13 @@ title("Circle Plot - Dolphin social networks colored by community")
 
 circos.clear()
 
-# -- Hive Pre-work ----
-
-# --~~ Set network attributes ----
-# When I put this code before community detection, the community results were
-# nuts. Coloring didn't make sense, tiny groups, etc.
-
-# 
-# # Calculate degree for all nodes (#links)
-# degAll <- igraph::degree(igraph.net, v = V(igraph.net), mode = "all")
-# # Calculate betweenness for all nodes
-# betAll <- igraph::betweenness(igraph.net, v = V(igraph.net), directed = FALSE) / (((vcount(igraph.net) - 1) * (vcount(igraph.net)-2)) / 2)
-# betAll.norm <- (betAll - min(betAll))/(max(betAll) - min(betAll))
-# # Set node degree and betweenness
-# igraph.net <- igraph::set.vertex.attribute(igraph.net, "degree", index = V(igraph.net), value = degAll)
-# igraph.net <- igraph::set.vertex.attribute(igraph.net, "betweenness", index = V(igraph.net), value = betAll.norm)
-# 
-# rm(degAll, betAll, betAll.norm)
 
 
-# --~~ node/edge color based on the properties ----
-
-# Calculate node size
-# We'll interpolate node size based on the node betweenness centrality, using the "approx" function
-# And we will assign a node size for each node based on its betweenness centrality
-# approxVals <- approx(c(0.5, 1.5), n = length(unique(V(igraph.net)$betweenness)))
-# nodes_size <- sapply(V(igraph.net)$betweenness, function(x) approxVals$y[which(sort(unique(V(igraph.net)$betweenness)) == x)])
-# rm(approxVals)
 
 
-# -- HiveR start ----
+# -- HiveR ----
 
 require(rgl)
-
 
 # Create a hive plot from the data frame
 # Set edge color to community.color for start node
@@ -247,9 +218,9 @@ hive1$axis.cols <- "#888888"
 axLabs <- paste('Community', unique(circle.v.df$community), sep = " ")
 circle.v.df$community <- as.integer(circle.v.df$community)
 
-data.frame(lab = hive1[["nodes"]][["lab"]], axis = hive1[["nodes"]][["axis"]])
-data.frame(lab = hive3[["nodes"]][["lab"]], axis = hive3[["nodes"]][["axis"]])
-hive1$edges
+# data.frame(lab = hive1[["nodes"]][["lab"]], axis = hive1[["nodes"]][["axis"]])
+# data.frame(lab = hive3[["nodes"]][["lab"]], axis = hive3[["nodes"]][["axis"]])
+# hive1$edges
 
 # --~~ source / man / sink Hive Plot ----
 
@@ -272,7 +243,6 @@ plotHive(hive2, method = "abs", bkgnd = "white"
 plotHive(hive1, method = "abs", bkgnd = "white"
          , axLabs = axLabs
          , axLab.gpar = gpar(col = unique(circle.v.df$vertex.color))
-         # , axLab.gpar = gpar(col = "#888888")
          , axLab.pos = 10
          )
 
@@ -283,7 +253,6 @@ hive3d$type = "3D"
 plot3dHive(hive3d, method = "abs", bkgnd = "white"
          , axLabs = axLabs
          , axLab.gpar = gpar(col = unique(circle.v.df$vertex.color))
-         # , axLab.gpar = gpar(col = "black")
          , axLab.pos = 10
 )
 
