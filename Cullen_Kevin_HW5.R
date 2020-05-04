@@ -158,6 +158,7 @@ plot(
 # -- Circle Plot (circlize) ----
 
 # https://www.r-graph-gallery.com/123-circular-plot-circlize-package-2.html
+# https://jokergoo.github.io/circlize_book/book/advanced-usage-of-chorddiagram.html
 
 # Load library
 library(circlize)
@@ -193,10 +194,38 @@ chordDiagram(circle.e.df[, 1:2]
              )
 title("Circle Plot - Dolphin social networks colored by community")
 
+
+# Chord diagram with rotated labels
+chordDiagram(
+  circle.e.df[, 1:2],
+  transparency = 0.5, 
+  order = circle.v.df$id, # set colors set before sorting data!!!
+  grid.col = as.vector(gridcolor),
+  annotationTrack = "grid",
+  annotationTrackHeight = uh(5, "mm"),
+  preAllocateTracks = list(track.height = max(strwidth(unlist(
+    dimnames(circle.e.df[, 1:2])
+  ))))
+)
+# we go back to the first track and customize sector labels
+circos.track(
+  track.index = 1,
+  panel.fun = function(x, y) {
+    circos.text(
+      CELL_META$xcenter,
+      CELL_META$ylim[1],
+      CELL_META$sector.index,
+      facing = "clockwise",
+      niceFacing = TRUE,
+      adj = c(0, 0.5)
+    )
+  },
+  bg.border = NA
+) # here set bg.border to NA is important
+title("Circle Plot - Dolphin social networks colored by community")
+
+
 circos.clear()
-
-
-
 
 
 # -- HiveR ----
