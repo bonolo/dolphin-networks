@@ -68,7 +68,7 @@ igraph.net <- simplify(igraph.net, remove.multiple = F, remove.loops = T)
 # -- Network plots... loop layouts ----
 
 # Set a network layout and plot:
-graph_attr(igraph.net, "layout") <- layout_with_graphopt
+graph_attr(igraph.net, "layout") <- layout_with_mds # layout_nicely, layout_with_graphopt
 plot(igraph.net, vertex.label = NA)
 # With curved edges...
 # plot(igraph.net, edge.curved = .1)
@@ -102,7 +102,6 @@ class(clp)
 
 # --~~ Plot w/ communities class built-in ----
 # Community detection returns an object of class "communities"
-# which igraph knows how to plot:
 plot(clp,
      igraph.net,
      layout = layout_with_fr, # layout_with_mds | layout_with_graphopt
@@ -142,7 +141,7 @@ plot(
   spring.length = 50,
   vertex.color = V(igraph.net)$vertex.color,
   vertex.frame.color = V(igraph.net)$vertex.color,
-  edge.curved = 0.3,
+  # edge.curved = 0.3,
   vertex.size = 5,
   vertex.label = NA,
   # vertex.label = V(igraph.net)$name, # Show names... useful for debugging
@@ -243,13 +242,33 @@ hive1 <- mod.edge2HPD(edge_df = circle.e.df[, 1:2]
                       )
 hive1$axis.cols <- "#888888"
 
+
+circle.v.df$node.axis <- 1L
+circle.v.df[circle.v.df$community == 1,]$node.axis <- 2L
+circle.v.df[circle.v.df$community == 3,]$node.axis <- 2L
+circle.v.df[circle.v.df$community == 4,]$node.axis <- 3L
+
+# node.radius <- c()
+# for(i in length(circle.v.df$community)){
+#   node.radius[[i]] <- as.integer(i)
+# }
+# circle.v.df$node.radius <- node.radius
+
+hive1a <- mod.edge2HPD(edge_df = circle.e.df[, 1:2]
+             , edge.color = circle.e.df$vertex.color
+             , node.color = circle.v.df[, c(1,3)]
+             , node.axis = circle.v.df[, c(1,4)]
+             , node.radius = circle.v.df[, c(1,1)]
+             # , node.radius = circle.v.df[, c(1,5)]
+)
+
+hive1a$axis.cols <- "#888888"
+
+
 # Make Community Labels
 axLabs <- paste('Community', unique(circle.v.df$community), sep = " ")
 circle.v.df$community <- as.integer(circle.v.df$community)
 
-# data.frame(lab = hive1[["nodes"]][["lab"]], axis = hive1[["nodes"]][["axis"]])
-# data.frame(lab = hive3[["nodes"]][["lab"]], axis = hive3[["nodes"]][["axis"]])
-# hive1$edges
 
 # --~~ source / man / sink Hive Plot ----
 
@@ -261,7 +280,7 @@ hive2 <- mod.mineHPD(hive2, option = "axis <- source.man.sink")
 
 plotHive(hive2, method = "abs", bkgnd = "white"
          , axLabs = c("source", "hub", "sink")
-         , axLab.gpar = gpar(col = brewer.pal(3, "Dark2"))
+         , axLab.gpar = gpar(col = hive1$axis.cols)  # (col = brewer.pal(3, "Dark2"))
          , axLab.pos = 10
 )
 
@@ -274,6 +293,12 @@ plotHive(hive1, method = "abs", bkgnd = "white"
          , axLab.gpar = gpar(col = unique(circle.v.df$vertex.color))
          , axLab.pos = 10
          )
+
+# Plot it
+plotHive(hive1a, method = "rank", bkgnd = "white"
+         , axLab.gpar = gpar(col = unique(circle.v.df$node.axis))
+         , axLab.pos = 10
+)
 
 
 # --~~ Hive Plot : 3D ----
