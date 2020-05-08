@@ -248,22 +248,20 @@ circle.v.df[circle.v.df$community == 1,]$node.axis <- 2L
 circle.v.df[circle.v.df$community == 3,]$node.axis <- 2L
 circle.v.df[circle.v.df$community == 4,]$node.axis <- 3L
 
-# node.radius <- c()
-# for(i in length(circle.v.df$community)){
-#   node.radius[[i]] <- as.integer(i)
-# }
-# circle.v.df$node.radius <- node.radius
+
+node.radius <- seq.int(from = 1, to = length(circle.v.df$community), by = 1)
+circle.v.df$node.radius <- node.radius
 
 hive1a <- mod.edge2HPD(edge_df = circle.e.df[, 1:2]
              , edge.color = circle.e.df$vertex.color
              , node.color = circle.v.df[, c(1,3)]
              , node.axis = circle.v.df[, c(1,4)]
-             , node.radius = circle.v.df[, c(1,1)]
-             # , node.radius = circle.v.df[, c(1,5)]
+             # , node.radius = circle.v.df[, c(1,1)]
+             , node.radius = circle.v.df[, c(1,5)]
 )
 
 hive1a$axis.cols <- "#888888"
-
+hive1a$desc <- "Hive plot - communities grouped on arbitrary axes"
 
 # Make Community Labels
 axLabs <- paste('Community', unique(circle.v.df$community), sep = " ")
@@ -295,7 +293,7 @@ plotHive(hive1, method = "abs", bkgnd = "white"
          )
 
 # Plot it
-plotHive(hive1a, method = "rank", bkgnd = "white"
+plotHive(hive1a, method = "rank", bkgnd = "white" # rank, norm, abs
          , axLab.gpar = gpar(col = unique(circle.v.df$node.axis))
          , axLab.pos = 10
 )
