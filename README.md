@@ -37,7 +37,7 @@ I used R to generate/assign colors (node and background) for each community in t
 
 I chose the `layout_with_fr` option and used `charge`, `max.sa.movement`, `spring.length` to improve separation of the groups.
 
-The visualization here demonstras the article's conclusions: “Fjords are low-productivity systems in which survival may easily require a greater level of co-operation, and hence group stability.” Unlike dolphins who live in the open ocean, these groups maintain long-term relationships with individuals in other nearby communities/pods because life is tough there.
+The visualization here demonstrates the article's conclusions: “Fjords are low-productivity systems in which survival may easily require a greater level of co-operation, and hence group stability.” Unlike dolphins who live in the open ocean, these groups maintain long-term relationships with individuals in other nearby communities/pods because life is tough there.
 
 ### Network Plot - Dolphin Social Networks Colored by Community
 
