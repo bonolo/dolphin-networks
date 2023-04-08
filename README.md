@@ -47,13 +47,16 @@ Nodes = Dolphins. Communities detected with `cluster_optimal()`
 
 Circle plots/chord diagrams
 ---------------------------
-My chord diagrams gave the best results and required much more time to arrange data correctly.The final results are visually stunning, easy to interpret and told the tale well.
+My chord diagrams gave the best results and required much more time to arrange data correctly. The final results are visually stunning, easy to interpret and told the tale well.
 
-Not all was perfect with `circlize`. Legends were difficult. Documentation was sparse and never truly understood modifying the tracks, in spite of getting it to work. I added the ids as labels because I didn't have the dolphin's names as used in the article.
+Not all was perfect with `circlize`. Legends were difficult. Documentation was sparse and I never truly understood modifying the tracks, in spite of getting it to work. I added the ids as labels because I didn't have the dolphin's names as used in the article.
 
 ### Circle Plot - Dolphin Social Networks Colored by Community
 
 ![Circle Plot - Dolphin Social Networks Colored by Community](plots/circle-plot.png "Circle Plot - Dolphin Social Networks Colored by Community")
+
+Each id number = 1 dolphin  
+Colors = communities
 
 
 Hive Plots
@@ -71,13 +74,22 @@ The other two hive plots showed all relationships, so I know my data was good. M
 
 ![Hive Plot - source / man / sink](plots/hive-plot-1.png "Hive Plot - source / man / sink")
 
+Nodes = Dolphins  
+Colors = communities
+
 ### Hive Plot: communities assigned to/sorted on arbitrary axes
 
 ![Hive Plot - arbitrary axes](plots/hive-plot-2.png "Hive Plot - arbitrary axes")
 
+Nodes = Dolphins  
+Colors = communities
+
 ### Hive Plot: one community per axis (but relationships/edges were omitted)
 
 ![Hive Plot - one community per axis](plots/hive-plot-3.png "Hive Plot - one community per axis")
+
+Nodes = Dolphins  
+
 
 Communities class built-in plot
 -------------------------------
