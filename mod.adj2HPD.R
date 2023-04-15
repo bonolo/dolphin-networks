@@ -1,3 +1,8 @@
+# https://gist.github.com/Vessy/6054742
+# A modified version of the "adj2HPD" function from the HiveR package.
+# This function can create HivePlotData objects from any network type 
+# (not just from the bipartite ones) 
+
 mod.adj2HPD <- function (M = NULL, axis.cols = NULL, type = "2D", desc = NULL) 
 {
   if (is.null(M)) 

@@ -1,3 +1,6 @@
+# Created by Vessy
+# https://www.vesnam.com/Rblog/viznets3/
+
 mod.mineHPD <- function(HPD, option = "", radData = NULL) 
 {
   edges <- HPD$edges

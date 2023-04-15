@@ -1,5 +1,6 @@
 *.Rproj
 .Rapp.history
+.RData
 .Rhistory
 .Rproj.user
 data/.DS_Store
